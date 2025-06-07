@@ -154,7 +154,7 @@ def do_one(source_p, n_frames, clean=False, minimal=False, full=False):
     train_cmd = (
         "conda run -n gsplat --no-capture-output CUDA_VISIBLE_DEVICES=0 python /v2gs/submodules/gsplat/examples/simple_trainer.py mcmc"
         f" --data_dir {source_p}  --data_factor 1 --result_dir {model_p}"
-        f" --save-ply --pose-opt --depth-loss --disable-viewer --visible-adam --app-opt --use-bilateral-grid"
+        f" --save-ply --pose-opt --depth-loss --disable-viewer --visible-adam --app-opt"
     )
 
 

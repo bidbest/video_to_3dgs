@@ -29,7 +29,7 @@ def extract_features(db_path, image_path, image_list):
         img_list_path = os.path.join(base_path, "image_list.txt")
         with open(img_list_path, "w") as f:
             f.writelines('\n'.join(image_list))
-        feat_extracton_cmd = (
+        feat_extraction_cmd = (
             "colmap feature_extractor "
             "--database_path " + db_path +
             " --image_path " + image_path +
@@ -40,7 +40,7 @@ def extract_features(db_path, image_path, image_list):
             " --SiftExtraction.use_gpu " + str(True)
         )
     else:
-        feat_extracton_cmd = (
+        feat_extraction_cmd = (
             "colmap feature_extractor "
             "--database_path " + db_path +
             " --image_path " + image_path +
@@ -50,7 +50,7 @@ def extract_features(db_path, image_path, image_list):
             " --SiftExtraction.use_gpu " + str(True)
         )
 
-    exit_code = os.system(feat_extracton_cmd)
+    exit_code = os.system(feat_extraction_cmd)
     if exit_code != 0:
         logging.error(f"Feature extraction failed with code {exit_code}. Exiting.")
         exit(exit_code)
@@ -485,7 +485,7 @@ def filter_rec(rec_orig, img_path):
     thr_ratio = np.percentile(ratio_2d3d, 10)
 
     # Remove images that do not meet the 2D and 3D point criteria.
-    to_remove = np.where((((n_points2d > thr_views) * (ratio_2d3d > thr_ratio)) * 1) == 0)[0]
+    to_remove = np.where(((n_points2d > thr_2dviews) * (ratio_2d3d > thr_ratio)) == 0)[0]
     to_remove_ids = ids[to_remove]
     [rec.deregister_image(i) for i in to_remove_ids]
     for i in to_remove_ids:
