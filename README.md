@@ -67,6 +67,7 @@ Parameters:
 - `-c, --clean`: Clean existing processed data and start fresh
 - `-m, --minimal`: Use minimal frame selection after final reconstruction
 - `-f, --full`: Use all frames for reconstruction and longer training
+- `--full_res`: Extract final frames at full resolution
 - `-a, --all`: Process all subdirectories in the source path
 
 ### Output

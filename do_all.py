@@ -71,7 +71,7 @@ def run_command(command, error_message):
     return True
 
 
-def do_one(source_p, n_frames, clean=False, minimal=False, full=False):
+def do_one(source_p, n_frames, clean=False, minimal=False, full=False, full_res=False):
     """
     Process a single video through the entire pipeline.
     
@@ -81,6 +81,7 @@ def do_one(source_p, n_frames, clean=False, minimal=False, full=False):
         clean (bool): Whether to clean existing processed data
         minimal (bool): Use minimal frame selection
         full (bool): Use all frames and longer training
+        full_res (bool): Extract final frames at full resolution
         
     Returns:
         bool: True if processing succeeded, False otherwise
@@ -126,6 +127,8 @@ def do_one(source_p, n_frames, clean=False, minimal=False, full=False):
             sfm_command += " -m"
         if full:
             sfm_command += " -f"
+        if full_res:
+            sfm_command += " --full_res"
             
         if not run_command(sfm_command, "Failed during frame extraction or SfM"):
             return False
@@ -154,7 +157,7 @@ def do_one(source_p, n_frames, clean=False, minimal=False, full=False):
     train_cmd = (
         "conda run -n gsplat --no-capture-output CUDA_VISIBLE_DEVICES=0 python /v2gs/submodules/gsplat/examples/simple_trainer.py mcmc"
         f" --data_dir {source_p}  --data_factor 1 --result_dir {model_p}"
-        f" --save-ply --pose-opt --depth-loss --disable-viewer --visible-adam --app-opt --use-bilateral-grid"
+        f" --save-ply --pose-opt --depth-loss --disable-viewer --visible-adam --app-opt"
     )
 
 
@@ -187,6 +190,7 @@ def main(args):
     clean = args.clean
     minimal = args.minimal
     full = args.full
+    full_res = args.full_res
     
     if not os.path.exists(source_p):
         print(f"Error: Source path {source_p} does not exist")
@@ -194,7 +198,7 @@ def main(args):
     
     if not args.all:
         # Process a single video
-        do_one(source_p, n_frames, clean=clean, minimal=minimal, full=full)
+        do_one(source_p, n_frames, clean=clean, minimal=minimal, full=full, full_res=full_res)
     else:
         # Process all subdirectories
         print(f"Processing all subdirectories in {source_p}")
@@ -208,7 +212,7 @@ def main(args):
                 continue
                 
             print(f"\nProcessing directory: {d}")
-            result = do_one(tmp, n_frames, clean=clean, minimal=minimal, full=full)
+            result = do_one(tmp, n_frames, clean=clean, minimal=minimal, full=full, full_res=full_res)
             
             if result:
                 successful += 1
@@ -229,6 +233,8 @@ if __name__ == '__main__':
                         help="Use minimal frame selection after final reconstruction")
     parser.add_argument("--full", "-f", action='store_true',
                         help="Use all frames for reconstruction and longer training")
+    parser.add_argument("--full_res", action='store_true',
+                        help="Extract final frames at full resolution")
     parser.add_argument("--all", "-a", action='store_true',
                         help="Process all subdirectories in the source path")
     

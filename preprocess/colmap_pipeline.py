@@ -29,7 +29,7 @@ def extract_features(db_path, image_path, image_list):
         img_list_path = os.path.join(base_path, "image_list.txt")
         with open(img_list_path, "w") as f:
             f.writelines('\n'.join(image_list))
-        feat_extracton_cmd = (
+        feat_extraction_cmd = (
             "colmap feature_extractor "
             "--database_path " + db_path +
             " --image_path " + image_path +
@@ -40,7 +40,7 @@ def extract_features(db_path, image_path, image_list):
             " --SiftExtraction.use_gpu " + str(True)
         )
     else:
-        feat_extracton_cmd = (
+        feat_extraction_cmd = (
             "colmap feature_extractor "
             "--database_path " + db_path +
             " --image_path " + image_path +
@@ -50,7 +50,7 @@ def extract_features(db_path, image_path, image_list):
             " --SiftExtraction.use_gpu " + str(True)
         )
 
-    exit_code = os.system(feat_extracton_cmd)
+    exit_code = os.system(feat_extraction_cmd)
     if exit_code != 0:
         logging.error(f"Feature extraction failed with code {exit_code}. Exiting.")
         exit(exit_code)
@@ -485,7 +485,7 @@ def filter_rec(rec_orig, img_path):
     thr_ratio = np.percentile(ratio_2d3d, 10)
 
     # Remove images that do not meet the 2D and 3D point criteria.
-    to_remove = np.where((((n_points2d > thr_views) * (ratio_2d3d > thr_ratio)) * 1) == 0)[0]
+    to_remove = np.where(((n_points2d > thr_2dviews) * (ratio_2d3d > thr_ratio)) == 0)[0]
     to_remove_ids = ids[to_remove]
     [rec.deregister_image(i) for i in to_remove_ids]
     for i in to_remove_ids:
@@ -523,7 +523,7 @@ def interpolate_all_frames(rec, fmw):
     
     return all_poses
 
-def do_one(source_path, n_images, clean=False, minimal=False, full=False, average_overlap=100):
+def do_one(source_path, n_images, clean=False, minimal=False, full=False, full_res=False, average_overlap=100):
     """
     Main pipeline function to process a video, perform reconstruction,
     and generate undistorted outputs.
@@ -534,6 +534,7 @@ def do_one(source_path, n_images, clean=False, minimal=False, full=False, averag
         clean (bool, optional): Flag to clean existing paths before processing.
         minimal (bool, optional): Use minimal frame selection after final reconstruction.
         full (bool, optional): Use all frame selection after final reconstruction.
+        full_res (bool, optional): Extract final frames at full resolution.
         average_overlap (int, optional): Target average overlap between frames.
     """
     files_n = os.listdir(source_path)
@@ -601,7 +602,7 @@ def do_one(source_path, n_images, clean=False, minimal=False, full=False, averag
             sorted_ids = sort_cameras_by_filename(rec2)
             frame_indices = sorted([_name_to_ind(rec2.images[i].name) for i in sorted_ids])
 
-        fmw.extract_specific_frames(frame_indices)
+        fmw.extract_specific_frames(frame_indices, full_res=full_res)
         final, _, _ = reconstruct(source_path, db_fin_path, input_p, distorted_sparse_final_path, sequential=False, image_list=[])
         
         if final is None:
@@ -657,7 +658,7 @@ def do_one(source_path, n_images, clean=False, minimal=False, full=False, averag
         shutil.move(source_file, destination_file)
 
 
-def do_one_robust(source_path, n_images, clean=False, minimal=False, full=False, average_overlap=100,
+def do_one_robust(source_path, n_images, clean=False, minimal=False, full=False, full_res=False, average_overlap=100,
                  random_ratio=0.2, pruning_threshold=0.05, coverage_weight=0.4, triangulation_weight=0.3,
                  diversity_weight=0.2, confidence_weight=0.1):
     """
@@ -671,6 +672,7 @@ def do_one_robust(source_path, n_images, clean=False, minimal=False, full=False,
         clean (bool, optional): Flag to clean existing paths before processing.
         minimal (bool, optional): Use minimal frame selection after final reconstruction.
         full (bool, optional): Use all frame selection after final reconstruction.
+        full_res (bool, optional): Extract final frames at full resolution.
         average_overlap (int, optional): Target average overlap between frames.
         random_ratio (float, optional): Ratio of frames to select randomly.
         pruning_threshold (float, optional): Threshold for pruning low-contribution frames.
@@ -803,7 +805,7 @@ def do_one_robust(source_path, n_images, clean=False, minimal=False, full=False,
         sorted_ids = sort_cameras_by_filename(rec2)
         frame_indices = sorted([_name_to_ind(rec2.images[i].name) for i in sorted_ids])
 
-        fmw.extract_specific_frames(frame_indices)
+        fmw.extract_specific_frames(frame_indices, full_res=full_res)
         final, _, _ = reconstruct(source_path, db_fin_path, input_p, distorted_sparse_final_path, sequential=False, image_list=[])
         
         if final is None:
