@@ -80,6 +80,13 @@ RUN conda run -n gsplat python -m pip install gsplat --index-url https://docs.gs
 COPY ./submodules/gsplat/examples/requirements.txt ./requirements.txt
 RUN conda run -n gsplat python -m pip install -r ./requirements.txt
 
+COPY ./thirdparty/Depth-Anything-3 /tmp/thirdparty/Depth-Anything-3
+WORKDIR /tmp/thirdparty/Depth-Anything-3
+
+RUN pip install xformers torch\>=2 torchvision
+RUN pip install -e .
+RUN pip install --no-build-isolation git+https://github.com/nerfstudio-project/gsplat.git@0b4dddf04cb687367602c01196913cde6a743d70
+
 WORKDIR /v2gs
 
 # This error occurs because there’s a conflict between the threading layer used
