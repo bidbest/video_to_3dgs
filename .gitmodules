@@ -7,3 +7,6 @@
 [submodule "submodules/gsplat"]
 	path = submodules/gsplat
 	url = https://github.com/nerfstudio-project/gsplat.git
+[submodule "thirdparty/Depth-Anything-3"]
+	path = thirdparty/Depth-Anything-3
+	url = git@github.com:ByteDance-Seed/Depth-Anything-3.git
