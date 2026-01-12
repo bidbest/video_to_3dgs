@@ -25,27 +25,30 @@ class FFmpegWrapper:
         self.tmp_path = os.path.join(os.path.dirname(video_path), "tmp")
         os.makedirs(output_dir, exist_ok=True)
         os.makedirs(self.tmp_path, exist_ok=True)
-        self.fps, self.duration = self._get_video_metadata()
+        self.fps, self.duration, self.width, self.height = self._get_video_metadata()
         self._extract_all_small_frames()
         self._get_frames_ids()
     
     def _get_video_metadata(self):
         """
-        Retrieve FPS and duration of the video using ffprobe.
-        
+        Retrieve FPS, duration, and resolution of the video using ffprobe.
+
         Returns:
-            Tuple containing the frame rate and video duration.
+            Tuple containing the frame rate, video duration, width and height.
         """
         cmd = [
             "ffprobe", "-v", "error", "-select_streams", "v:0",
-            "-show_entries", "stream=r_frame_rate,duration",
+            "-show_entries", "stream=r_frame_rate,duration,width,height",
             "-of", "json", self.video_path
         ]
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         metadata = json.loads(result.stdout)
-        frame_rate = eval(metadata['streams'][0]['r_frame_rate'])
-        duration = float(metadata['streams'][0]['duration'])
-        return frame_rate, duration
+        stream = metadata['streams'][0]
+        frame_rate = eval(stream['r_frame_rate'])
+        duration = float(stream['duration'])
+        width = int(stream['width'])
+        height = int(stream['height'])
+        return frame_rate, duration, width, height
 
     def _extract_all_small_frames(self):
         """
@@ -66,7 +69,7 @@ class FFmpegWrapper:
         """
         self.frames = sorted(os.listdir(self.tmp_path))
 
-    def extract_specific_frames(self, frame_indices):
+    def extract_specific_frames(self, frame_indices, full_res=False):
         """
         Extract specific frames from the video based on given frame indices.
         
@@ -75,7 +78,12 @@ class FFmpegWrapper:
         """
         # Build select filter for ffmpeg command
         select_filter = "+".join([f"eq(n\\,{f})" for f in frame_indices])
-        cmd = f'ffmpeg -i {self.video_path} -vf "select={select_filter}, scale=-1:960" -vsync vfr -pix_fmt rgb8 -q:v 4 {self.output_dir}/%08d.jpeg'
+        if full_res:
+            scale_part = ""
+        else:
+            scale_part = ", scale=-1:960"
+
+        cmd = f'ffmpeg -i {self.video_path} -vf "select={select_filter}{scale_part}" -vsync vfr -pix_fmt rgb8 -q:v 4 {self.output_dir}/%08d.jpeg'
         exit_code = os.system(cmd)
         if exit_code != 0:
             print("error extracting frames")
